@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>平行趋势检验组合生成器 Pro</title>
+    <!-- 引用同一文件夹下的 favo.png 作为图标 -->
+    <link rel="icon" href="favo.png" type="image/png">
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #6c5ce7;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #ddd;
+            --stata-color: #882255; 
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 950px;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 25px;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        h1 img {
+            height: 32px;
+            width: 32px;
+            border-radius: 4px;
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .form-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-item label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .form-item input, .form-item select {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-item input:focus, .form-item select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        /* 归并区域样式 */
+        .binning-wrapper {
+            grid-column: 1 / -1;
+            background-color: #f8f9fa;
+            border: 1px dashed #ccc;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 5px;
+        }
+
+        .binning-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .binning-header label {
+            font-weight: bold;
+            color: var(--secondary-color);
+            cursor: pointer;
+        }
+
+        .binning-controls {
+            display: none; /* 默认隐藏 */
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 10px;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .binning-controls.active {
+            display: grid;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 选项区域 */
+        .options-area {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #eee;
+            cursor: pointer;
+        }
+        
+        .checkbox-group:hover {
+            background: #f0f7ff;
+        }
+
+        .checkbox-group input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .stata-option {
+            border-left: 4px solid var(--stata-color);
+        }
+
+        .calc-info {
+            display: none; /* 根据要求隐藏 */
+        }
+
+        button.generate-btn {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+
+        button.generate-btn:hover {
+            background-color: #357abd;
+        }
+
+        .output-section {
+            margin-top: 25px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 350px;
+            padding: 15px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            resize: vertical;
+            box-sizing: border-box;
+            background-color: #fafafa;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .copy-btn {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            float: right;
+        }
+        
+        .copy-btn:hover {
+            background-color: #218838;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>
+        <img src="favo.png" onerror="this.style.display='none'" alt="icon"> 
+        平行趋势检验组合生成器
+    </h1>
+
+    <div class="input-group">
+        <!-- 基础参数 -->
+        <div class="form-item">
+            <label>样本起始年份</label>
+            <input type="number" id="startYear" placeholder="2000" value="2000">
+        </div>
+        <div class="form-item">
+            <label>样本结束年份</label>
+            <input type="number" id="endYear" placeholder="2020" value="2020">
+        </div>
+        <div class="form-item">
+            <label>最早政策时点</label>
+            <input type="number" id="minPolicy" placeholder="2008" value="2008">
+        </div>
+        <div class="form-item">
+            <label>最晚政策时点</label>
+            <input type="number" id="maxPolicy" placeholder="2012" value="2012">
+        </div>
+        <div class="form-item">
+            <label>最少 Before 数量</label>
+            <input type="number" id="minPre" value="2" min="1">
+            <div class="hint">左侧至少保留几个点？</div>
+        </div>
+        <div class="form-item">
+            <label>最少 After 数量</label>
+            <input type="number" id="minPost" value="2" min="1">
+            <div class="hint">右侧至少保留几个点？</div>
+        </div>
+
+        <!-- 归并设置区域 -->
+        <div class="binning-wrapper">
+            <div class="binning-header" onclick="toggleBinning()">
+                <input type="checkbox" id="enableBinning">
+                <label for="enableBinning">启用归并计算 (Binning)</label>
+            </div>
+            <div class="binning-controls" id="binningControls">
+                <div class="form-item">
+                    <label>归并 Before (Left Bin At)</label>
+                    <input type="number" id="binPreInput" value="3" min="3">
+                    <div class="hint">例如 3，生成 Before3_ (即 >=3期)</div>
+                </div>
+                <div class="form-item">
+                    <label>归并 After (Right Bin At)</label>
+                    <input type="number" id="binPostInput" value="3" min="3">
+                    <div class="hint">例如 3，生成 After3_ (即 >=3期)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-item" style="grid-column: 1 / -1; margin-top:10px;">
+            <label>基期选择 (Reference)</label>
+            <select id="basePeriod">
+                <option value="none">无 (None)</option>
+                <option value="0">基期 0 (剔除 After0)</option>
+                <option value="-1" selected>基期 -1 (剔除 Before1)</option>
+            </select>
+        </div>
+
+        <div class="options-area">
+            <div class="checkbox-group">
+                <input type="checkbox" id="showBoth">
+                <label for="showBoth">同时输出 [无基期] 结果用于对比</label>
+            </div>
+            
+            <div class="checkbox-group stata-option">
+                <input type="checkbox" id="stataLoopMode">
+                <label for="stataLoopMode">生成 Stata 循环专用格式 (local plist)</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- 隐藏的计算信息 div -->
+    <div id="calcInfo" class="calc-info"></div>
+
+    <button class="generate-btn" onclick="generateCombinations()">生成组合代码</button>
+
+    <div class="output-section">
+        <label style="font-weight:bold; color:#555;">生成结果:</label>
+        <textarea id="resultOutput" readonly></textarea>
+        <button class="copy-btn" onclick="copyResult()">复制结果</button>
+    </div>
+</div>
+
+<script>
+    // 切换归并面板显示
+    function toggleBinning() {
+        const checkbox = document.getElementById('enableBinning');
+        // 如果是点击div触发的，需要手动切换checkbox状态（因为checkbox本身有阻止冒泡可能，或者为了体验更好）
+        // 但这里利用label联动，直接检查checkbox状态即可
+        const controls = document.getElementById('binningControls');
+        if (checkbox.checked) {
+            controls.classList.add('active');
+        } else {
+            controls.classList.remove('active');
+        }
+    }
+    
+    // 确保点击label或div能正确触发
+    document.querySelector('.binning-header').addEventListener('click', function(e) {
+        if (e.target.tagName !== 'INPUT') {
+            const checkbox = document.getElementById('enableBinning');
+            checkbox.checked = !checkbox.checked;
+            toggleBinning();
+        }
+    });
+
+    // 辅助函数：生成左侧序列
+    // binAt: null (不归并) 或 数字 (归并)
+    function getLeftSequence(maxB, stopB, binAt) {
+        if (binAt && binAt >= 3) {
+            // 归并模式：固定生成 Before{K}_ ... Before1
+            // 注意：归并模式下，不需要循环 maxB，因为它被 capped 在 binAt
+            let list = [`Before${binAt}_`];
+            for (let i = binAt - 1; i >= 1; i--) {
+                list.push(`Before${i}`);
+            }
+            return [list]; // 返回单一组合
+        } else {
+            // 普通模式：生成 Before{b} ... Before1
+            let combinations = [];
+            for (let b = maxB; b >= stopB; b--) {
+                let list = [];
+                for (let i = b; i >= 1; i--) list.push(`Before${i}`);
+                combinations.push(list);
+            }
+            return combinations;
+        }
+    }
+
+    // 辅助函数：生成右侧序列
+    function getRightSequence(maxA, stopA, binAt) {
+        if (binAt && binAt >= 3) {
+            // 归并模式：固定生成 After0 ... After{K-1} After{K}_
+            let list = [];
+            for (let i = 0; i < binAt; i++) { // 0 到 binAt-1
+                list.push(`After${i}`);
+            }
+            list.push(`After${binAt}_`);
+            return [list]; // 返回单一组合
+        } else {
+            // 普通模式：生成 After0 ... After{a}
+            let combinations = [];
+            for (let a = maxA; a >= stopA; a--) {
+                let list = [];
+                for (let i = 0; i <= a; i++) list.push(`After${i}`);
+                combinations.push(list);
+            }
+            return combinations;
+        }
+    }
+
+    function generateCombinations() {
+        // 1. 获取输入
+        const start = parseInt(document.getElementById('startYear').value);
+        const end = parseInt(document.getElementById('endYear').value);
+        const minPol = parseInt(document.getElementById('minPolicy').value);
+        const maxPol = parseInt(document.getElementById('maxPolicy').value);
+        const minPreCnt = parseInt(document.getElementById('minPre').value);
+        const minPostCnt = parseInt(document.getElementById('minPost').value);
+        const base = document.getElementById('basePeriod').value;
+        const showBoth = document.getElementById('showBoth').checked;
+        const stataMode = document.getElementById('stataLoopMode').checked;
+        const isBinning = document.getElementById('enableBinning').checked;
+        
+        let binPreVal = parseInt(document.getElementById('binPreInput').value);
+        let binPostVal = parseInt(document.getElementById('binPostInput').value);
+
+        // 校验年份
+        if (isNaN(start) || isNaN(end) || isNaN(minPol) || isNaN(maxPol)) {
+            alert("请输入完整的年份信息");
+            return;
+        }
+
+        // 计算最大范围
+        const maxBeforeVal = maxPol - start;
+        const maxAfterVal = end - minPol;
+
+        // 计算停止位
+        let stopBeforeIndex = minPreCnt; 
+        if (base === '-1') stopBeforeIndex = minPreCnt + 1; // 剔除 Before1 后需剩 minPreCnt
+        
+        let stopAfterIndex = minPostCnt - 1;
+        if (base === '0') stopAfterIndex = minPostCnt;      // 剔除 After0 后需剩 minPostCnt
+
+        // 基础验证
+        if (maxBeforeVal < stopBeforeIndex || maxAfterVal < stopAfterIndex) {
+            alert("时间跨度不足以生成满足最小数量要求的组合。");
+            return;
+        }
+
+        let resultItems = [];
+
+        // ----- 处理核心逻辑：生成所有需要的组合 -----
+        // 这里的策略是：
+        // 1. 标准：左(普通) + 右(普通)
+        // 2. 左归并：左(归并) + 右(普通) -> 前提：开启归并
+        // 3. 右归并：左(普通) + 右(归并) -> 前提：开启归并
+        // 4. 双归并：左(归并) + 右(归并) -> 前提：开启归并 && 有基期
+
+        // 预生成普通序列的集合
+        const leftNormal = getLeftSequence(maxBeforeVal, stopBeforeIndex, null);
+        const rightNormal = getRightSequence(maxAfterVal, stopAfterIndex, null);
+        
+        // 预生成归并序列的集合 (如果启用)
+        let leftBinned = [];
+        let rightBinned = [];
+        
+        if (isBinning) {
+            if (binPreVal < 3) binPreVal = 3;
+            if (binPostVal < 3) binPostVal = 3;
+            
+            // 检查归并是否可能 (比如最大Before只有2，但要求归并3，则不可行)
+            if (maxBeforeVal >= binPreVal) {
+                leftBinned = getLeftSequence(maxBeforeVal, stopBeforeIndex, binPreVal);
+            }
+            if (maxAfterVal >= binPostVal) {
+                rightBinned = getRightSequence(maxAfterVal, stopAfterIndex, binPostVal);
+            }
+        }
+
+        // 定义合并函数：输入左集合和右集合，生成字符串列表
+        function combineAndPush(lCollection, rCollection) {
+            if (!lCollection.length || !rCollection.length) return;
+
+            for (let lList of lCollection) {
+                for (let rList of rCollection) {
+                    // 合并
+                    let rawList = lList.concat(rList);
+                    
+                    // 剔除基期
+                    let processedList = [];
+                    if (base === 'none') {
+                        processedList = [...rawList];
+                    } else {
+                        processedList = rawList.filter(token => {
+                            if (base === '0' && token === 'After0') return false;
+                            if (base === '-1' && token === 'Before1') return false;
+                            return true;
+                        });
+                    }
+
+                    const separator = stataMode ? ";" : " ";
+                    
+                    // 逻辑：如果只展示处理后，就push处理后的。如果showBoth，且有基期，都push
+                    if (showBoth && base !== 'none') {
+                        resultItems.push(rawList.join(separator));
+                        resultItems.push(processedList.join(separator));
+                    } else {
+                        resultItems.push(processedList.join(separator));
+                    }
+                }
+            }
+        }
+
+        // 1. 标准组合 (不归并)
+        combineAndPush(leftNormal, rightNormal);
+
+        // 如果启用归并，附加额外组合
+        if (isBinning) {
+            // 2. 左侧归并，右侧不归并
+            // 前提：左侧能归并 (maxB >= binPre)
+            if (leftBinned.length > 0) {
+                combineAndPush(leftBinned, rightNormal);
+            }
+
+            // 3. 左侧不归并，右侧归并
+            // 前提：右侧能归并
+            if (rightBinned.length > 0) {
+                combineAndPush(leftNormal, rightBinned);
+            }
+
+            // 4. 两侧都归并
+            // 前提：两侧都能归并 且 指定了基期 (根据用户要求: "只有指定基期的时候才能使用")
+            if (leftBinned.length > 0 && rightBinned.length > 0 && base !== 'none') {
+                combineAndPush(leftBinned, rightBinned);
+            }
+        }
+
+        // 渲染结果
+        const textarea = document.getElementById('resultOutput');
+        if (resultItems.length === 0) {
+            textarea.value = "没有生成有效组合。请检查年份设置是否过短，或者归并阈值设置过大。";
+            return;
+        }
+
+        if (stataMode) {
+            // Stata 模式：单行 local
+            const finalString = `local plist "${resultItems.join(" ")}"`;
+            textarea.value = finalString;
+        } else {
+            // 普通模式：换行
+            textarea.value = resultItems.join("\n");
+        }
+    }
+
+    function copyResult() {
+        const textarea = document.getElementById('resultOutput');
+        textarea.select();
+        document.execCommand('copy');
+        
+        const btn = document.querySelector('.copy-btn');
+        const originalText = btn.innerText;
+        btn.innerText = "复制成功!";
+        btn.style.backgroundColor = "#218838";
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.style.backgroundColor = "#28a745";
+        }, 1500);
+    }
+</script>
+
+</body>
+</html>
